@@ -1,13 +1,14 @@
 import { generateMaze } from "../utils/generateMaze.ts";
 
-interface MazeProps {
+export type MazeType = number[][];
+
+export interface MazeProps {
   row: number;
   col: number;
 }
 
 const Maze = ({ row, col }: MazeProps) => {
   const generatedMaze = generateMaze(row, col);
-  console.log("generated: ", generatedMaze);
   return (
     <>
       <div className="flex flex-col">
