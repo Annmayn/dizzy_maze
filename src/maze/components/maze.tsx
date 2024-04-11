@@ -18,7 +18,7 @@ const Maze = ({ row, col }: MazeProps) => {
               {row.map((col) => {
                 return (
                   <div
-                    className={`size-12 ${col ? "bg-green-300" : "bg-red-300"}`}
+                    className={`size-12 min-h-12 min-w-12 ${col ? "bg-green-300" : "bg-red-300"}`}
                   ></div>
                 );
               })}
