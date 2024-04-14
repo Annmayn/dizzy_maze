@@ -1,11 +1,14 @@
-import { FormEvent, useRef, useState } from "react";
-import Maze from "./maze.tsx";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import Maze, { MazeType } from "./maze.tsx";
+import { generateMaze } from "../utils/generateMaze.ts";
 
 const MazeBuilder = () => {
   const [row, setRow] = useState<number | undefined>();
   const [col, setCol] = useState<number | undefined>();
   const rowRef = useRef<HTMLInputElement>(null);
   const colRef = useRef<HTMLInputElement>(null);
+  const [maze, setMaze] = useState<MazeType>();
+
   const setParsedSize = (
     size: string,
     func: (e: number | undefined) => void,
@@ -14,11 +17,23 @@ const MazeBuilder = () => {
     func(isNaN(parsedSize) ? undefined : parsedSize);
   };
 
+  useEffect(() => {
+    if (row && col && row > 0 && col > 0) {
+      const generatedMaze = generateMaze(row, col);
+      setMaze(generatedMaze);
+    }
+  }, [row, col]);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (rowRef?.current != null) setParsedSize(rowRef.current.value, setRow);
-    if (colRef?.current != null) setParsedSize(colRef.current.value, setCol);
+    if (rowRef?.current != null) {
+      setParsedSize(rowRef.current.value, setRow);
+    }
+    if (colRef?.current != null) {
+      setParsedSize(colRef.current.value, setCol);
+    }
   };
+
   return (
     <>
       <div className="fixed top-0 left-0 w-full flex gap-x-5 justify-center items-center bg-gray-500 p-5">
@@ -43,9 +58,9 @@ const MazeBuilder = () => {
         </form>
       </div>
       <div className="h-full w-full justify-between">
-        {row && col && row > 0 && col > 0 && (
+        {row && col && maze && (
           <div className="bg-white h-full w-full">
-            <Maze row={row} col={col} />
+            <Maze row={row} col={col} generatedMaze={maze} />
           </div>
         )}
       </div>
