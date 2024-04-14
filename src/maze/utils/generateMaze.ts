@@ -78,6 +78,8 @@ const moveInDirection = (direction: Direction, row: number, col: number) => {
       return [row, col - 2];
     case Direction.RIGHT:
       return [row, col + 2];
+    default:
+      return [row, col];
   }
 };
 
