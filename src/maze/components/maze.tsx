@@ -22,76 +22,28 @@ const Maze = ({ generatedMaze }: MazeProps) => {
   const currentTimeRef = useRef<number>();
   const prevTimeRef = useRef<number>();
   const initialX =
-    (generatedMaze.length - 2) * PIXEL_SIZE +
+    (generatedMaze[0].length - 2) * PIXEL_SIZE +
     Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2);
   const initialY =
     (generatedMaze.length - 2) * PIXEL_SIZE +
     Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2);
-
-  const [playerX, setPlayerX] = useState(initialX);
-  const [playerY, setPlayerY] = useState(initialY);
+  const [playerX, setPlayerX] = useState(0);
+  const [playerY, setPlayerY] = useState(0);
   const playerPosRef = useRef<Coordinates>(toCoordinates(playerX, playerY));
-
-  const resetPlayer = () => {
-    setPlayerDirection(Direction.NEUTRAL);
-    setPlayerX(initialX);
-    setPlayerY(initialY);
-  };
-
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
-    switch (e.key) {
-      case "w":
-        setPlayerDirection(Direction.UP);
-        break;
-      case "s":
-        setPlayerDirection(Direction.DOWN);
-        break;
-      case "a":
-        setPlayerDirection(Direction.LEFT);
-        break;
-      case "d":
-        setPlayerDirection(Direction.RIGHT);
-        break;
-      case "r":
-        resetPlayer();
-        break;
-    }
-  }, []);
+  const mazeRef = useRef<MazeType>(generatedMaze);
 
   useEffect(() => {
-    window.addEventListener("keypress", handleKeyPress);
-    return () => window.removeEventListener("keypress", handleKeyPress);
-  }, [handleKeyPress]);
-
-  const updatePosition = (playerDirection: Direction, timedelta: number) => {
-    if (playerDirection == Direction.NEUTRAL) return;
-    const [x, y] = fromCoordinates(playerPosRef.current);
-    const multiplier = timedelta * 0.3;
-    if (playerDirection == Direction.UP) {
-      const newCoords = toCoordinates(x, y - multiplier);
-      setPlayerY(
-        canMoveToNewCoordinates(generatedMaze, newCoords) ? y - multiplier : y,
-      );
-    }
-    if (playerDirection == Direction.DOWN) {
-      const newCoords = toCoordinates(x, y + multiplier);
-      setPlayerY(
-        canMoveToNewCoordinates(generatedMaze, newCoords) ? y + multiplier : y,
-      );
-    }
-    if (playerDirection == Direction.LEFT) {
-      const newCoords = toCoordinates(x - multiplier, y);
-      setPlayerX(
-        canMoveToNewCoordinates(generatedMaze, newCoords) ? x - multiplier : x,
-      );
-    }
-    if (playerDirection == Direction.RIGHT) {
-      const newCoords = toCoordinates(x + multiplier, y);
-      setPlayerX(
-        canMoveToNewCoordinates(generatedMaze, newCoords) ? x + multiplier : x,
-      );
-    }
-  };
+    setPlayerX(
+      (generatedMaze[0].length - 2) * PIXEL_SIZE +
+        Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2),
+    );
+    setPlayerY(
+      (generatedMaze.length - 2) * PIXEL_SIZE +
+        Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2),
+    );
+    setPlayerDirection(Direction.NEUTRAL);
+    mazeRef.current = generatedMaze;
+  }, [generatedMaze]);
 
   useEffect(() => {
     playerDirectionRef.current = playerDirection;
@@ -101,10 +53,68 @@ const Maze = ({ generatedMaze }: MazeProps) => {
     playerPosRef.current = toCoordinates(playerX, playerY);
   }, [playerX, playerY]);
 
+  const resetPlayer = useCallback(() => {
+    setPlayerDirection(Direction.NEUTRAL);
+    setPlayerX(initialX);
+    setPlayerY(initialY);
+  }, [initialX, initialY]);
+
+  const handleKeyPress = useCallback(
+    (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "w":
+          setPlayerDirection(Direction.UP);
+          break;
+        case "s":
+          setPlayerDirection(Direction.DOWN);
+          break;
+        case "a":
+          setPlayerDirection(Direction.LEFT);
+          break;
+        case "d":
+          setPlayerDirection(Direction.RIGHT);
+          break;
+        case "r":
+          resetPlayer();
+          break;
+      }
+    },
+    [resetPlayer],
+  );
+
+  useEffect(() => {
+    window.addEventListener("keypress", handleKeyPress);
+    return () => window.removeEventListener("keypress", handleKeyPress);
+  }, [handleKeyPress]);
+
+  const updatePosition = (timedelta: number) => {
+    const maze = mazeRef.current;
+    const playerDirection = playerDirectionRef.current;
+    if (playerDirection == Direction.NEUTRAL) return;
+    const [x, y] = fromCoordinates(playerPosRef.current);
+    const multiplier = timedelta * 0.3;
+    if (playerDirection == Direction.UP) {
+      const newCoords = toCoordinates(x, y - multiplier);
+      setPlayerY(canMoveToNewCoordinates(maze, newCoords) ? y - multiplier : y);
+    }
+    if (playerDirection == Direction.DOWN) {
+      const newCoords = toCoordinates(x, y + multiplier);
+      setPlayerY(canMoveToNewCoordinates(maze, newCoords) ? y + multiplier : y);
+    }
+    if (playerDirection == Direction.LEFT) {
+      const newCoords = toCoordinates(x - multiplier, y);
+      setPlayerX(canMoveToNewCoordinates(maze, newCoords) ? x - multiplier : x);
+    }
+    if (playerDirection == Direction.RIGHT) {
+      const newCoords = toCoordinates(x + multiplier, y);
+      setPlayerX(canMoveToNewCoordinates(maze, newCoords) ? x + multiplier : x);
+    }
+  };
+
   const animatePlayer = (time: number) => {
     if (prevTimeRef.current && playerDirectionRef.current != undefined) {
       const timedelta = time - prevTimeRef.current;
-      updatePosition(playerDirectionRef.current, timedelta);
+      updatePosition(timedelta);
     }
     prevTimeRef.current = time;
     currentTimeRef.current = requestAnimationFrame(animatePlayer);
