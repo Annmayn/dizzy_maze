@@ -1,12 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Direction } from "../utils/direction.ts";
-import { PIXEL_SIZE, PLAYER_PIXEL_X, PLAYER_PIXEL_Y } from "../../common.ts";
-import { canMoveToNewCoordinates } from "../utils/canMoveToNewCoordinates.ts";
-import {
-  Coordinates,
-  fromCoordinates,
-  toCoordinates,
-} from "../utils/coordinates.ts";
+import { useEffect, useRef } from "react";
+import { PIXEL_SIZE } from "../../common.ts";
+import Player from "./player.tsx";
 
 export type MazeType = number[][];
 
@@ -17,113 +11,11 @@ export interface MazeProps {
 }
 
 const Maze = ({ generatedMaze }: MazeProps) => {
-  const [playerDirection, setPlayerDirection] = useState(Direction.NEUTRAL);
-  const playerDirectionRef = useRef<Direction>();
-  const currentTimeRef = useRef<number>();
-  const prevTimeRef = useRef<number>();
-  const initialX =
-    (generatedMaze[0].length - 2) * PIXEL_SIZE +
-    Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2);
-  const initialY =
-    (generatedMaze.length - 2) * PIXEL_SIZE +
-    Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2);
-  const [playerX, setPlayerX] = useState(0);
-  const [playerY, setPlayerY] = useState(0);
-  const playerPosRef = useRef<Coordinates>(toCoordinates(playerX, playerY));
   const mazeRef = useRef<MazeType>(generatedMaze);
 
   useEffect(() => {
-    setPlayerX(
-      (generatedMaze[0].length - 2) * PIXEL_SIZE +
-        Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2),
-    );
-    setPlayerY(
-      (generatedMaze.length - 2) * PIXEL_SIZE +
-        Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2),
-    );
-    setPlayerDirection(Direction.NEUTRAL);
     mazeRef.current = generatedMaze;
   }, [generatedMaze]);
-
-  useEffect(() => {
-    playerDirectionRef.current = playerDirection;
-  }, [playerDirection]);
-
-  useEffect(() => {
-    playerPosRef.current = toCoordinates(playerX, playerY);
-  }, [playerX, playerY]);
-
-  const resetPlayer = useCallback(() => {
-    setPlayerDirection(Direction.NEUTRAL);
-    setPlayerX(initialX);
-    setPlayerY(initialY);
-  }, [initialX, initialY]);
-
-  const handleKeyPress = useCallback(
-    (e: KeyboardEvent) => {
-      switch (e.key) {
-        case "w":
-          setPlayerDirection(Direction.UP);
-          break;
-        case "s":
-          setPlayerDirection(Direction.DOWN);
-          break;
-        case "a":
-          setPlayerDirection(Direction.LEFT);
-          break;
-        case "d":
-          setPlayerDirection(Direction.RIGHT);
-          break;
-        case "r":
-          resetPlayer();
-          break;
-      }
-    },
-    [resetPlayer],
-  );
-
-  useEffect(() => {
-    window.addEventListener("keypress", handleKeyPress);
-    return () => window.removeEventListener("keypress", handleKeyPress);
-  }, [handleKeyPress]);
-
-  const updatePosition = (timedelta: number) => {
-    const maze = mazeRef.current;
-    const playerDirection = playerDirectionRef.current;
-    if (playerDirection == Direction.NEUTRAL) return;
-    const [x, y] = fromCoordinates(playerPosRef.current);
-    const multiplier = timedelta * 0.3;
-    if (playerDirection == Direction.UP) {
-      const newCoords = toCoordinates(x, y - multiplier);
-      setPlayerY(canMoveToNewCoordinates(maze, newCoords) ? y - multiplier : y);
-    }
-    if (playerDirection == Direction.DOWN) {
-      const newCoords = toCoordinates(x, y + multiplier);
-      setPlayerY(canMoveToNewCoordinates(maze, newCoords) ? y + multiplier : y);
-    }
-    if (playerDirection == Direction.LEFT) {
-      const newCoords = toCoordinates(x - multiplier, y);
-      setPlayerX(canMoveToNewCoordinates(maze, newCoords) ? x - multiplier : x);
-    }
-    if (playerDirection == Direction.RIGHT) {
-      const newCoords = toCoordinates(x + multiplier, y);
-      setPlayerX(canMoveToNewCoordinates(maze, newCoords) ? x + multiplier : x);
-    }
-  };
-
-  const animatePlayer = (time: number) => {
-    if (prevTimeRef.current && playerDirectionRef.current != undefined) {
-      const timedelta = time - prevTimeRef.current;
-      updatePosition(timedelta);
-    }
-    prevTimeRef.current = time;
-    currentTimeRef.current = requestAnimationFrame(animatePlayer);
-  };
-
-  useEffect(() => {
-    currentTimeRef.current = requestAnimationFrame(animatePlayer);
-    return () => cancelAnimationFrame(currentTimeRef.current!);
-  }, []);
 
   return (
     <>
@@ -145,18 +37,7 @@ const Maze = ({ generatedMaze }: MazeProps) => {
             </div>
           );
         })}
-        <div
-          className={`bg-purple-400 absolute`}
-          style={{
-            transform: `translate(${playerX}px, ${playerY}px)`,
-            minWidth: `${PLAYER_PIXEL_Y}px`,
-            width: `${PLAYER_PIXEL_Y}px`,
-            minHeight: `${PLAYER_PIXEL_X}px`,
-            height: `${PLAYER_PIXEL_X}px`,
-          }}
-        >
-          Player
-        </div>
+        <Player maze={generatedMaze} />
       </div>
     </>
   );
