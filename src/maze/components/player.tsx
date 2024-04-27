@@ -144,7 +144,7 @@ const Player = ({ maze }: PlayerProps) => {
     <div
       className={`bg-purple-400 absolute`}
       style={{
-        background: "url(src/assets/car.png) no-repeat center",
+        background: "url(assets/car.png) no-repeat center",
         backgroundSize: "cover",
         transform: `translate(${playerX}px, ${playerY}px) rotate(${rotation}deg)`,
         minWidth: `${PLAYER_PIXEL_Y}px`,

@@ -27,13 +27,13 @@ const Maze = ({ generatedMaze }: MazeProps) => {
               {row.map((col, colInd) => {
                 const assetName =
                   rowInd == 1 && colInd == 1
-                    ? "url(src/assets/end.png)"
+                    ? "url(assets/end.png)"
                     : rowInd == generatedMaze.length - 2 &&
                         colInd == generatedMaze[0].length - 2
-                      ? "url(src/assets/start.png)"
+                      ? "url(assets/start.png)"
                       : isPath(col)
                         ? ""
-                        : "url(src/assets/wall.png)";
+                        : "url(assets/wall.png)";
                 return (
                   <div
                     className="bg-gray-200"
