@@ -17,21 +17,35 @@ const Maze = ({ generatedMaze }: MazeProps) => {
     mazeRef.current = generatedMaze;
   }, [generatedMaze]);
 
+  const isPath = (val: number) => val == 1;
   return (
     <>
       <div className="flex flex-col">
-        {generatedMaze.map((row) => {
+        {generatedMaze.map((row, rowInd) => {
           return (
             <div className="flex">
-              {row.map((col) => {
+              {row.map((col, colInd) => {
+                const assetName =
+                  rowInd == 1 && colInd == 1
+                    ? "url(src/assets/end.png)"
+                    : rowInd == generatedMaze.length - 2 &&
+                        colInd == generatedMaze[0].length - 2
+                      ? "url(src/assets/start.png)"
+                      : isPath(col)
+                        ? ""
+                        : "url(src/assets/wall.png)";
                 return (
                   <div
-                    className={`${col ? "bg-green-300" : "bg-red-300"}`}
+                    className="bg-gray-200"
                     style={{
+                      backgroundImage: `${assetName}`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
                       minWidth: `${PIXEL_SIZE}px`,
                       minHeight: `${PIXEL_SIZE}px`,
                     }}
-                  ></div>
+                  />
                 );
               })}
             </div>
