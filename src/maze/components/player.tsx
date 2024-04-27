@@ -63,18 +63,23 @@ const Player = ({ maze }: PlayerProps) => {
     (e: KeyboardEvent) => {
       switch (e.key) {
         case "w":
+        case "W":
           setPlayerDirection(Direction.UP);
           break;
         case "s":
+        case "S":
           setPlayerDirection(Direction.DOWN);
           break;
         case "a":
+        case "A":
           setPlayerDirection(Direction.LEFT);
           break;
         case "d":
+        case "D":
           setPlayerDirection(Direction.RIGHT);
           break;
         case "r":
+        case "R":
           resetPlayer();
           break;
       }
@@ -88,6 +93,7 @@ const Player = ({ maze }: PlayerProps) => {
   }, [handleKeyPress]);
 
   const updatePosition = (timedelta: number) => {
+    const maze = mazeRef.current;
     const playerDirection = playerDirectionRef.current;
     if (playerDirection == Direction.NEUTRAL) return;
     const [x, y] = fromCoordinates(playerPosRef.current);
@@ -124,19 +130,29 @@ const Player = ({ maze }: PlayerProps) => {
     return () => cancelAnimationFrame(currentTimeRef.current!);
   }, []);
 
+  const rotation =
+    playerDirection == Direction.DOWN
+      ? 90
+      : playerDirection == Direction.LEFT
+        ? 0
+        : playerDirection == Direction.UP
+          ? -90
+          : playerDirection == Direction.RIGHT
+            ? 180
+            : -90;
   return (
     <div
       className={`bg-purple-400 absolute`}
       style={{
-        transform: `translate(${playerX}px, ${playerY}px)`,
+        background: "url(src/assets/car.png) no-repeat center",
+        backgroundSize: "cover",
+        transform: `translate(${playerX}px, ${playerY}px) rotate(${rotation}deg)`,
         minWidth: `${PLAYER_PIXEL_Y}px`,
         width: `${PLAYER_PIXEL_Y}px`,
         minHeight: `${PLAYER_PIXEL_X}px`,
         height: `${PLAYER_PIXEL_X}px`,
       }}
-    >
-      Player
-    </div>
+    />
   );
 };
 
