@@ -10,10 +10,10 @@ export const canMoveToNewCoordinates = (
   const mazeTotalX = maze.length * PIXEL_SIZE;
   const mazeTotalY = maze.length * PIXEL_SIZE;
   const newCoordinates = [
-    newCoordinate,
-    toCoordinates(newPlayerX, newPlayerY + PLAYER_PIXEL_X),
-    toCoordinates(newPlayerX + PLAYER_PIXEL_Y, newPlayerY),
-    toCoordinates(newPlayerX + PLAYER_PIXEL_Y, newPlayerY + PLAYER_PIXEL_X),
+    newCoordinate, //top left
+    toCoordinates(newPlayerX, newPlayerY + PLAYER_PIXEL_X - 1), //bottom left
+    toCoordinates(newPlayerX + PLAYER_PIXEL_Y, newPlayerY), //top right
+    toCoordinates(newPlayerX + PLAYER_PIXEL_Y, newPlayerY + PLAYER_PIXEL_X), //bottom right
   ];
   for (const coordinates of newCoordinates) {
     const [y, x] = fromCoordinates(coordinates);
