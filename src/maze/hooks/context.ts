@@ -8,6 +8,8 @@ interface TimerContextProps {
   currentTime: number;
   setCurrentTime: Dispatch<SetStateAction<number>>;
   setOpenSnackBar: Dispatch<SetStateAction<boolean>>;
+  showSolution: boolean;
+  setShowSolution: Dispatch<SetStateAction<boolean>>;
 }
 export const TimerContext = createContext<TimerContextProps | undefined>(
   undefined,
