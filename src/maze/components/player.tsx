@@ -7,6 +7,7 @@ import {
   fromCoordinates,
   toCoordinates,
 } from "../utils/coordinates.ts";
+import { useTimer } from "../hooks/useTimer.tsx";
 
 export type MazeType = number[][];
 
@@ -15,6 +16,14 @@ export interface PlayerProps {
 }
 
 const Player = ({ maze }: PlayerProps) => {
+  const {
+    startTimer,
+    setStartTimer,
+    setCurrentTime,
+    hasGameEnded,
+    setHasGameEnded,
+    setOpenSnackBar,
+  } = useTimer();
   const initialX =
     (maze[0].length - 2) * PIXEL_SIZE +
     Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2);
@@ -57,10 +66,18 @@ const Player = ({ maze }: PlayerProps) => {
     setPlayerDirection(Direction.NEUTRAL);
     setPlayerX(initialX);
     setPlayerY(initialY);
+    setStartTimer(false);
+    setCurrentTime(0);
+    setHasGameEnded(false);
   }, [initialX, initialY]);
+
+  const showHelp = useCallback(() => {
+    setOpenSnackBar(true);
+  }, [setOpenSnackBar]);
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
+      if (!startTimer && !hasGameEnded) setStartTimer(true);
       switch (e.key) {
         case "w":
         case "W":
@@ -82,9 +99,12 @@ const Player = ({ maze }: PlayerProps) => {
         case "R":
           resetPlayer();
           break;
+        case "h":
+        case "H":
+          showHelp();
       }
     },
-    [resetPlayer],
+    [startTimer, hasGameEnded, setStartTimer, resetPlayer, showHelp],
   );
 
   useEffect(() => {
@@ -92,11 +112,20 @@ const Player = ({ maze }: PlayerProps) => {
     return () => window.removeEventListener("keypress", handleKeyPress);
   }, [handleKeyPress]);
 
+  const hasReachedFinishLine = (x: number, y: number) => {
+    return x / PLAYER_PIXEL_X < 2 && y / PLAYER_PIXEL_Y < 2;
+  };
+
   const updatePosition = (timedelta: number) => {
     const maze = mazeRef.current;
     const playerDirection = playerDirectionRef.current;
     if (playerDirection == Direction.NEUTRAL) return;
     const [x, y] = fromCoordinates(playerPosRef.current);
+    if (hasReachedFinishLine(x, y)) {
+      setStartTimer(false);
+      setHasGameEnded(true);
+      return;
+    }
     const multiplier = timedelta * 0.3;
     if (playerDirection == Direction.UP) {
       const newCoords = toCoordinates(x, y - multiplier);

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { PIXEL_SIZE } from "../../common.ts";
 import Player from "./player.tsx";
+import { Score } from "./Score.tsx";
 
 export type MazeType = number[][];
 
@@ -52,6 +53,7 @@ const Maze = ({ generatedMaze }: MazeProps) => {
           );
         })}
         <Player maze={generatedMaze} />
+        <Score />
       </div>
     </>
   );

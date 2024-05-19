@@ -1,7 +1,10 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import Maze, { MazeType } from "./maze.tsx";
 import { generateMaze } from "../utils/generateMaze.ts";
 import { Alert, Slide, Snackbar } from "@mui/material";
+import Timer from "./timer.tsx";
+import { TimerContext } from "../hooks/context.ts";
+import { Help } from "@mui/icons-material";
 
 const MazeBuilder = () => {
   const [row, setRow] = useState<number | undefined>();
@@ -10,6 +13,9 @@ const MazeBuilder = () => {
   const colRef = useRef<HTMLInputElement>(null);
   const [maze, setMaze] = useState<MazeType>();
   const [openSnackBar, setOpenSnackBar] = useState(false);
+  const [startTimer, setStartTimer] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [hasGameEnded, setHasGameEnded] = useState(false);
 
   const setParsedSize = (
     size: string,
@@ -19,13 +25,15 @@ const MazeBuilder = () => {
     func(isNaN(parsedSize) ? undefined : parsedSize);
   };
 
-  useEffect(() => {
+  const handleGenerateMaze = () => {
     if (row && col && row > 0 && col > 0) {
       const generatedMaze = generateMaze(row, col);
       setMaze(generatedMaze);
+      setStartTimer(false);
+      setCurrentTime(0);
       setOpenSnackBar(true);
     }
-  }, [row, col]);
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -35,17 +43,32 @@ const MazeBuilder = () => {
     if (colRef?.current != null) {
       setParsedSize(colRef.current.value, setCol);
     }
+    handleGenerateMaze();
   };
 
   return (
-    <>
-      <div className="fixed top-0 left-0 w-full flex gap-x-5 justify-center items-center bg-gray-500 p-5">
+    <TimerContext.Provider
+      value={{
+        startTimer,
+        setStartTimer,
+        currentTime,
+        setCurrentTime,
+        hasGameEnded,
+        setHasGameEnded,
+        setOpenSnackBar,
+      }}
+    >
+      <div className="fixed top-0 left-0 w-full flex gap-x-5 justify-between items-center bg-gray-500 p-5">
+        <p className="flex items-center gap-x-1 text-sm">
+          Help <Help height={"10px"} width={"10px"} />
+        </p>
         <Snackbar
           open={openSnackBar}
           onClose={() => setOpenSnackBar(false)}
-          autoHideDuration={4000}
+          autoHideDuration={3000}
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
           TransitionComponent={Slide}
+          className="mt-12"
         >
           <Alert severity={"info"}>
             Use <span className="font-semibold">W</span>,{" "}
@@ -54,8 +77,11 @@ const MazeBuilder = () => {
             <span className="font-semibold">D</span> to control the car.
             <br />
             Press <span className="font-semibold">R</span> to reset.
+            <br />
+            Press <span className="font-semibold">H</span> for help.
           </Alert>
         </Snackbar>
+
         <form onSubmit={handleSubmit}>
           <div className="flex gap-x-12">
             <div className="flex gap-x-2 items-center">
@@ -71,10 +97,11 @@ const MazeBuilder = () => {
               <input id="mazeCol" className="h-8 p-2" ref={colRef} />
             </div>
             <button type="submit" className="font-bold">
-              Generate Maze
+              {maze ? "Regenerate Maze" : "Generate Maze"}
             </button>
           </div>
         </form>
+        <Timer />
       </div>
       <div className="h-full w-full justify-between">
         {row && col && maze && (
@@ -83,7 +110,7 @@ const MazeBuilder = () => {
           </div>
         )}
       </div>
-    </>
+    </TimerContext.Provider>
   );
 };
 export default MazeBuilder;
