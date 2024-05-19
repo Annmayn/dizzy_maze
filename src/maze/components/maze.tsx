@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { PIXEL_SIZE } from "../../common.ts";
 import Player from "./player.tsx";
 import { Score } from "./Score.tsx";
+import { useTimer } from "../hooks/useTimer.tsx";
 
 export type MazeType = number[][];
 
@@ -12,13 +13,15 @@ export interface MazeProps {
 }
 
 const Maze = ({ generatedMaze }: MazeProps) => {
+  const { showSolution } = useTimer();
   const mazeRef = useRef<MazeType>(generatedMaze);
 
   useEffect(() => {
     mazeRef.current = generatedMaze;
   }, [generatedMaze]);
 
-  const isPath = (val: number) => val == 1;
+  const isPath = (val: number) => val == 1 || val == 2;
+  const isSolution = (val: number) => val == 2;
   return (
     <>
       <div className="flex flex-col">
@@ -40,6 +43,8 @@ const Maze = ({ generatedMaze }: MazeProps) => {
                     className="bg-gray-200"
                     style={{
                       backgroundImage: `${assetName}`,
+                      backgroundColor:
+                        showSolution && isSolution(col) ? "forestgreen" : "",
                       backgroundRepeat: "no-repeat",
                       backgroundPosition: "center",
                       backgroundSize: "cover",

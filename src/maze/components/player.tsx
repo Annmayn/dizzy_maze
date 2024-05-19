@@ -15,6 +15,8 @@ export interface PlayerProps {
   maze: MazeType;
 }
 
+const helperKeys = ["h", "H", "f", "F"];
+
 const Player = ({ maze }: PlayerProps) => {
   const {
     startTimer,
@@ -23,6 +25,7 @@ const Player = ({ maze }: PlayerProps) => {
     hasGameEnded,
     setHasGameEnded,
     setOpenSnackBar,
+    setShowSolution,
   } = useTimer();
   const initialX =
     (maze[0].length - 2) * PIXEL_SIZE +
@@ -77,7 +80,7 @@ const Player = ({ maze }: PlayerProps) => {
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
-      if (!["h", "H"].includes(e.key) && !startTimer && !hasGameEnded)
+      if (!helperKeys.includes(e.key) && !startTimer && !hasGameEnded)
         setStartTimer(true);
       switch (e.key) {
         case "w":
@@ -103,9 +106,21 @@ const Player = ({ maze }: PlayerProps) => {
         case "h":
         case "H":
           showHelp();
+          break;
+        case "f":
+        case "F":
+          setShowSolution((solution) => !solution);
+          break;
       }
     },
-    [startTimer, hasGameEnded, setStartTimer, resetPlayer, showHelp],
+    [
+      startTimer,
+      hasGameEnded,
+      setStartTimer,
+      resetPlayer,
+      showHelp,
+      setShowSolution,
+    ],
   );
 
   useEffect(() => {

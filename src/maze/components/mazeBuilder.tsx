@@ -16,16 +16,22 @@ const MazeBuilder = () => {
   const [startTimer, setStartTimer] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [hasGameEnded, setHasGameEnded] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
 
   const setParsedSize = (
     size: string,
     func: (e: number | undefined) => void,
   ) => {
     const parsedSize = parseInt(size);
-    func(isNaN(parsedSize) ? undefined : parsedSize);
+    const returnVal = isNaN(parsedSize) ? undefined : parsedSize;
+    func(returnVal);
+    return returnVal;
   };
 
-  const handleGenerateMaze = () => {
+  const handleGenerateMaze = (
+    row: number | undefined,
+    col: number | undefined,
+  ) => {
     if (row && col && row > 0 && col > 0) {
       const generatedMaze = generateMaze(row, col);
       setMaze(generatedMaze);
@@ -37,13 +43,16 @@ const MazeBuilder = () => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (rowRef?.current != null) {
-      setParsedSize(rowRef.current.value, setRow);
-    }
-    if (colRef?.current != null) {
-      setParsedSize(colRef.current.value, setCol);
-    }
-    handleGenerateMaze();
+    const rowSize =
+      rowRef?.current != null
+        ? setParsedSize(rowRef.current.value, setRow)
+        : undefined;
+    const colSize =
+      colRef?.current != null
+        ? setParsedSize(colRef.current.value, setCol)
+        : undefined;
+
+    handleGenerateMaze(rowSize, colSize);
   };
 
   return (
@@ -56,6 +65,8 @@ const MazeBuilder = () => {
         hasGameEnded,
         setHasGameEnded,
         setOpenSnackBar,
+        showSolution,
+        setShowSolution,
       }}
     >
       <div className="fixed top-0 left-0 w-full flex gap-x-5 justify-between items-center bg-gray-500 p-5">
@@ -82,6 +93,8 @@ const MazeBuilder = () => {
             <span className="font-semibold">D</span> to control the car.
             <br />
             Press <span className="font-semibold">R</span> to reset.
+            <br />
+            Press <span className="font-semibold">F</span> to see solution.
             <br />
             Press <span className="font-semibold">H</span> for help.
           </Alert>
