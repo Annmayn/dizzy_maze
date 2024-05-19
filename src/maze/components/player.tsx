@@ -77,7 +77,8 @@ const Player = ({ maze }: PlayerProps) => {
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
-      if (!startTimer && !hasGameEnded) setStartTimer(true);
+      if (!["h", "H"].includes(e.key) && !startTimer && !hasGameEnded)
+        setStartTimer(true);
       switch (e.key) {
         case "w":
         case "W":
