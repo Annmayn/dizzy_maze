@@ -59,7 +59,12 @@ const MazeBuilder = () => {
       }}
     >
       <div className="fixed top-0 left-0 w-full flex gap-x-5 justify-between items-center bg-gray-500 p-5">
-        <p className="flex items-center gap-x-1 text-sm">
+        <p
+          className="flex items-center gap-x-1 text-sm cursor-pointer"
+          onClick={() => {
+            setOpenSnackBar(true);
+          }}
+        >
           Help <Help height={"10px"} width={"10px"} />
         </p>
         <Snackbar

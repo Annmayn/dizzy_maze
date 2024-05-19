@@ -16,17 +16,19 @@ export const Score = () => {
   });
 
   return (
-    <Dialog
-      open={hasGameEnded}
-      disableEscapeKeyDown={false}
-      TransitionComponent={Transition}
-    >
-      <DialogTitle>Game Over</DialogTitle>
-      <DialogContent>
-        <p>
-          Your score: <span>{currentTime}</span>
-        </p>
-      </DialogContent>
-    </Dialog>
+    hasGameEnded && (
+      <Dialog
+        open={hasGameEnded}
+        disableEscapeKeyDown={false}
+        TransitionComponent={Transition}
+      >
+        <DialogTitle>Game Over</DialogTitle>
+        <DialogContent>
+          <p>
+            Your score: <span>{currentTime}</span>
+          </p>
+        </DialogContent>
+      </Dialog>
+    )
   );
 };
