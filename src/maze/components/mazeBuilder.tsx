@@ -106,13 +106,23 @@ const MazeBuilder = () => {
               <label className="font-bold" htmlFor={"mazeRow"}>
                 Number of rows
               </label>
-              <input id="mazeRow" className="h-8 p-2" ref={rowRef} />
+              <input
+                id="mazeRow"
+                className="h-8 p-2"
+                ref={rowRef}
+                defaultValue={10}
+              />
             </div>
             <div className="flex gap-x-2 items-center">
               <label className="font-bold" htmlFor={"mazeCol"}>
                 Number of columns
               </label>
-              <input id="mazeCol" className="h-8 p-2" ref={colRef} />
+              <input
+                id="mazeCol"
+                className="h-8 p-2"
+                ref={colRef}
+                defaultValue={10}
+              />
             </div>
             <button type="submit" className="font-bold">
               {maze ? "Regenerate Maze" : "Generate Maze"}

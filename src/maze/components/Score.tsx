@@ -12,7 +12,9 @@ export const Score = () => {
     },
     ref: React.Ref<unknown>,
   ) {
-    return <Fade in={true} ref={ref} timeout={3000} {...props} />;
+    return (
+      <Fade in={true} ref={ref} timeout={3000} {...props} children={<></>} />
+    );
   });
 
   return (

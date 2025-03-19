@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { PIXEL_SIZE } from "../../common.ts";
 import Player from "./player.tsx";
 import { Score } from "./Score.tsx";
@@ -22,41 +22,44 @@ const Maze = ({ generatedMaze }: MazeProps) => {
 
   const isPath = (val: number) => val == 1 || val == 2;
   const isSolution = (val: number) => val == 2;
+  const cachedGeneratedMaze = useMemo(() => {
+    return generatedMaze.map((row, rowInd) => {
+      return (
+        <div className="flex">
+          {row.map((col, colInd) => {
+            const assetName =
+              rowInd == 1 && colInd == 1
+                ? "url(assets/end.png)"
+                : rowInd == generatedMaze.length - 2 &&
+                    colInd == generatedMaze[0].length - 2
+                  ? "url(assets/start.png)"
+                  : isPath(col)
+                    ? ""
+                    : "url(assets/wall.png)";
+            return (
+              <div
+                className="bg-gray-200"
+                style={{
+                  backgroundImage: `${assetName}`,
+                  backgroundColor:
+                    showSolution && isSolution(col) ? "forestgreen" : "",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                  minWidth: `${PIXEL_SIZE}px`,
+                  minHeight: `${PIXEL_SIZE}px`,
+                }}
+              />
+            );
+          })}
+        </div>
+      );
+    });
+  }, [generatedMaze, showSolution]);
   return (
     <>
       <div className="flex flex-col">
-        {generatedMaze.map((row, rowInd) => {
-          return (
-            <div className="flex">
-              {row.map((col, colInd) => {
-                const assetName =
-                  rowInd == 1 && colInd == 1
-                    ? "url(assets/end.png)"
-                    : rowInd == generatedMaze.length - 2 &&
-                        colInd == generatedMaze[0].length - 2
-                      ? "url(assets/start.png)"
-                      : isPath(col)
-                        ? ""
-                        : "url(assets/wall.png)";
-                return (
-                  <div
-                    className="bg-gray-200"
-                    style={{
-                      backgroundImage: `${assetName}`,
-                      backgroundColor:
-                        showSolution && isSolution(col) ? "forestgreen" : "",
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "center",
-                      backgroundSize: "cover",
-                      minWidth: `${PIXEL_SIZE}px`,
-                      minHeight: `${PIXEL_SIZE}px`,
-                    }}
-                  />
-                );
-              })}
-            </div>
-          );
-        })}
+        {cachedGeneratedMaze}
         <Player maze={generatedMaze} />
         <Score />
       </div>
