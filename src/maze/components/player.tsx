@@ -134,7 +134,7 @@ const Player = ({ maze }: PlayerProps) => {
 
   const updatePosition = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (timedelta: number) => {
+    (_timedelta: number) => {
       const maze = mazeRef.current;
       const playerDirection = playerDirectionRef.current;
       if (playerDirection == Direction.NEUTRAL) return;
