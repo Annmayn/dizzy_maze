@@ -143,7 +143,8 @@ const Player = ({ maze }: PlayerProps) => {
         setHasGameEnded(true);
         return;
       }
-      const multiplier = timedelta * 0.3;
+      // const multiplier = timedelta * 0.3;
+      const multiplier = 7.5;
       if (playerDirection == Direction.UP) {
         const newCoords = toCoordinates(x, y - multiplier);
         setPlayerY(
