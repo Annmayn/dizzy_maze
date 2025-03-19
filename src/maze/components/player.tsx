@@ -72,7 +72,7 @@ const Player = ({ maze }: PlayerProps) => {
     setStartTimer(false);
     setCurrentTime(0);
     setHasGameEnded(false);
-  }, [initialX, initialY]);
+  }, [initialX, initialY, setCurrentTime, setHasGameEnded, setStartTimer]);
 
   const showHelp = useCallback(() => {
     setOpenSnackBar(true);
@@ -132,48 +132,62 @@ const Player = ({ maze }: PlayerProps) => {
     return x / PLAYER_PIXEL_X < 2 && y / PLAYER_PIXEL_Y < 2;
   };
 
-  const updatePosition = (timedelta: number) => {
-    const maze = mazeRef.current;
-    const playerDirection = playerDirectionRef.current;
-    if (playerDirection == Direction.NEUTRAL) return;
-    const [x, y] = fromCoordinates(playerPosRef.current);
-    if (hasReachedFinishLine(x, y)) {
-      setStartTimer(false);
-      setHasGameEnded(true);
-      return;
-    }
-    const multiplier = timedelta * 0.3;
-    if (playerDirection == Direction.UP) {
-      const newCoords = toCoordinates(x, y - multiplier);
-      setPlayerY(canMoveToNewCoordinates(maze, newCoords) ? y - multiplier : y);
-    }
-    if (playerDirection == Direction.DOWN) {
-      const newCoords = toCoordinates(x, y + multiplier);
-      setPlayerY(canMoveToNewCoordinates(maze, newCoords) ? y + multiplier : y);
-    }
-    if (playerDirection == Direction.LEFT) {
-      const newCoords = toCoordinates(x - multiplier, y);
-      setPlayerX(canMoveToNewCoordinates(maze, newCoords) ? x - multiplier : x);
-    }
-    if (playerDirection == Direction.RIGHT) {
-      const newCoords = toCoordinates(x + multiplier, y);
-      setPlayerX(canMoveToNewCoordinates(maze, newCoords) ? x + multiplier : x);
-    }
-  };
+  const updatePosition = useCallback(
+    (timedelta: number) => {
+      const maze = mazeRef.current;
+      const playerDirection = playerDirectionRef.current;
+      if (playerDirection == Direction.NEUTRAL) return;
+      const [x, y] = fromCoordinates(playerPosRef.current);
+      if (hasReachedFinishLine(x, y)) {
+        setStartTimer(false);
+        setHasGameEnded(true);
+        return;
+      }
+      const multiplier = timedelta * 0.3;
+      if (playerDirection == Direction.UP) {
+        const newCoords = toCoordinates(x, y - multiplier);
+        setPlayerY(
+          canMoveToNewCoordinates(maze, newCoords) ? y - multiplier : y,
+        );
+      }
+      if (playerDirection == Direction.DOWN) {
+        const newCoords = toCoordinates(x, y + multiplier);
+        setPlayerY(
+          canMoveToNewCoordinates(maze, newCoords) ? y + multiplier : y,
+        );
+      }
+      if (playerDirection == Direction.LEFT) {
+        const newCoords = toCoordinates(x - multiplier, y);
+        setPlayerX(
+          canMoveToNewCoordinates(maze, newCoords) ? x - multiplier : x,
+        );
+      }
+      if (playerDirection == Direction.RIGHT) {
+        const newCoords = toCoordinates(x + multiplier, y);
+        setPlayerX(
+          canMoveToNewCoordinates(maze, newCoords) ? x + multiplier : x,
+        );
+      }
+    },
+    [setHasGameEnded, setStartTimer],
+  );
 
-  const animatePlayer = (time: number) => {
-    if (prevTimeRef.current && playerDirectionRef.current != undefined) {
-      const timedelta = time - prevTimeRef.current;
-      updatePosition(timedelta);
-    }
-    prevTimeRef.current = time;
-    currentTimeRef.current = requestAnimationFrame(animatePlayer);
-  };
+  const animatePlayer = useCallback(
+    (time: number) => {
+      if (prevTimeRef.current && playerDirectionRef.current != undefined) {
+        const timedelta = time - prevTimeRef.current;
+        updatePosition(timedelta);
+      }
+      prevTimeRef.current = time;
+      currentTimeRef.current = requestAnimationFrame(animatePlayer);
+    },
+    [updatePosition],
+  );
 
   useEffect(() => {
     currentTimeRef.current = requestAnimationFrame(animatePlayer);
     return () => cancelAnimationFrame(currentTimeRef.current!);
-  }, []);
+  }, [animatePlayer]);
 
   const rotation =
     playerDirection == Direction.DOWN

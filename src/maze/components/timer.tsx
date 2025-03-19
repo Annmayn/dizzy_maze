@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTimer } from "../hooks/useTimer.tsx";
 import { AvTimer } from "@mui/icons-material";
 
@@ -7,21 +7,26 @@ const Timer = () => {
   const prevTimeRef = useRef<number>();
   const { currentTime, setCurrentTime, startTimer } = useTimer();
 
-  const animateTimer = (time: number) => {
-    if (prevTimeRef.current) {
-      const timedelta = time - prevTimeRef.current;
-      const timedeltaInSeconds = timedelta / 1000;
-      if (startTimer)
-        setCurrentTime((t) => Math.round((t + timedeltaInSeconds) * 100) / 100);
-    }
-    prevTimeRef.current = time;
-    currentTimeRef.current = requestAnimationFrame(animateTimer);
-  };
+  const animateTimer = useCallback(
+    (time: number) => {
+      if (prevTimeRef.current) {
+        const timedelta = time - prevTimeRef.current;
+        const timedeltaInSeconds = timedelta / 1000;
+        if (startTimer)
+          setCurrentTime(
+            (t) => Math.round((t + timedeltaInSeconds) * 100) / 100,
+          );
+      }
+      prevTimeRef.current = time;
+      currentTimeRef.current = requestAnimationFrame(animateTimer);
+    },
+    [setCurrentTime, startTimer],
+  );
 
   useEffect(() => {
     currentTimeRef.current = requestAnimationFrame(animateTimer);
     return () => cancelAnimationFrame(currentTimeRef.current!);
-  }, [startTimer]);
+  }, [animateTimer, startTimer]);
 
   return (
     <div
