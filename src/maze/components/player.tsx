@@ -13,11 +13,12 @@ export type MazeType = number[][];
 
 export interface PlayerProps {
   maze: MazeType;
+  onPositionChange?: (x: number, y: number) => void;
 }
 
 const helperKeys = ["h", "H", "f", "F"];
 
-const Player = ({ maze }: PlayerProps) => {
+const Player = ({ maze, onPositionChange }: PlayerProps) => {
   const {
     startTimer,
     setStartTimer,
@@ -50,7 +51,8 @@ const Player = ({ maze }: PlayerProps) => {
 
   useEffect(() => {
     playerPosRef.current = toCoordinates(playerX, playerY);
-  }, [playerX, playerY]);
+    onPositionChange?.(playerX, playerY);
+  }, [playerX, playerY, onPositionChange]);
 
   useEffect(() => {
     setPlayerX(
@@ -203,7 +205,7 @@ const Player = ({ maze }: PlayerProps) => {
             : -90;
   return (
     <div
-      className={`bg-purple-400 absolute`}
+      className="absolute left-0 top-0 z-10"
       style={{
         background: "url(assets/car.png) no-repeat center",
         backgroundSize: "cover",

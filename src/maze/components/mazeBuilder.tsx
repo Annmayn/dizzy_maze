@@ -161,8 +161,12 @@ const MazeBuilder = () => {
         </form>
       </div>
       <div
-        className="h-full w-full justify-between"
-        style={{ paddingTop: headerHeight }}
+        className="w-full overflow-hidden"
+        style={{
+          paddingTop: headerHeight,
+          height: "100vh",
+          boxSizing: "border-box",
+        }}
       >
         {row && col && maze && (
           <div className="bg-white h-full w-full">
