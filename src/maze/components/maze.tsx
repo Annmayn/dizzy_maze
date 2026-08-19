@@ -29,8 +29,16 @@ const Maze = ({ generatedMaze }: MazeProps) => {
     if (!viewport || !world) return;
 
     playerPosRef.current = { x: playerX, y: playerY };
-    const cameraX = viewport.clientWidth / 2 - playerX - PLAYER_PIXEL_Y / 2;
-    const cameraY = viewport.clientHeight / 2 - playerY - PLAYER_PIXEL_X / 2;
+
+    // Don't pan past the maze origin — keep the top-left fixed once it's visible.
+    const cameraX = Math.min(
+      0,
+      viewport.clientWidth / 2 - playerX - PLAYER_PIXEL_Y / 2,
+    );
+    const cameraY = Math.min(
+      0,
+      viewport.clientHeight / 2 - playerY - PLAYER_PIXEL_X / 2,
+    );
     world.style.transform = `translate(${cameraX}px, ${cameraY}px)`;
   }, []);
 
