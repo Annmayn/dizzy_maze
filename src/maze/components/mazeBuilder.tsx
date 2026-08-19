@@ -1,4 +1,4 @@
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Maze, { MazeType } from "./maze.tsx";
 import { generateMaze } from "../utils/generateMaze.ts";
 import { Alert, Slide, Snackbar } from "@mui/material";
@@ -11,12 +11,30 @@ const MazeBuilder = () => {
   const [col, setCol] = useState<number | undefined>();
   const rowRef = useRef<HTMLInputElement>(null);
   const colRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const [maze, setMaze] = useState<MazeType>();
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const [startTimer, setStartTimer] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [hasGameEnded, setHasGameEnded] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeight = () => setHeaderHeight(header.offsetHeight);
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
 
   const setParsedSize = (
     size: string,
@@ -69,15 +87,21 @@ const MazeBuilder = () => {
         setShowSolution,
       }}
     >
-      <div className="fixed top-0 left-0 w-full flex gap-x-5 justify-between items-center bg-gray-500 p-5">
-        <p
-          className="flex items-center gap-x-1 text-sm cursor-pointer"
-          onClick={() => {
-            setOpenSnackBar(true);
-          }}
-        >
-          Help <Help height={"10px"} width={"10px"} />
-        </p>
+      <div
+        ref={headerRef}
+        className="fixed top-0 left-0 z-10 w-full flex flex-col md:flex-row gap-3 md:gap-x-5 justify-between items-stretch md:items-center bg-gray-500 p-3 md:p-5"
+      >
+        <div className="flex justify-between items-center gap-3 w-full md:w-auto">
+          <p
+            className="flex items-center gap-x-1 text-sm cursor-pointer"
+            onClick={() => {
+              setOpenSnackBar(true);
+            }}
+          >
+            Help <Help height={"10px"} width={"10px"} />
+          </p>
+          <Timer />
+        </div>
         <Snackbar
           open={openSnackBar}
           onClose={() => setOpenSnackBar(false)}
@@ -100,38 +124,46 @@ const MazeBuilder = () => {
           </Alert>
         </Snackbar>
 
-        <form onSubmit={handleSubmit}>
-          <div className="flex gap-x-12">
+        <form onSubmit={handleSubmit} className="w-full md:w-auto min-w-0">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-x-12 items-stretch md:items-center">
             <div className="flex gap-x-2 items-center">
-              <label className="font-bold" htmlFor={"mazeRow"}>
-                Number of rows
+              <label
+                className="font-bold text-sm md:text-base whitespace-nowrap"
+                htmlFor={"mazeRow"}
+              >
+                Rows
               </label>
               <input
                 id="mazeRow"
-                className="h-8 p-2"
+                className="h-8 p-2 w-16 min-w-0"
                 ref={rowRef}
                 defaultValue={10}
               />
             </div>
             <div className="flex gap-x-2 items-center">
-              <label className="font-bold" htmlFor={"mazeCol"}>
-                Number of columns
+              <label
+                className="font-bold text-sm md:text-base whitespace-nowrap"
+                htmlFor={"mazeCol"}
+              >
+                Columns
               </label>
               <input
                 id="mazeCol"
-                className="h-8 p-2"
+                className="h-8 p-2 w-16 min-w-0"
                 ref={colRef}
                 defaultValue={10}
               />
             </div>
-            <button type="submit" className="font-bold">
+            <button type="submit" className="font-bold whitespace-nowrap">
               {maze ? "Regenerate Maze" : "Generate Maze"}
             </button>
           </div>
         </form>
-        <Timer />
       </div>
-      <div className="h-full w-full justify-between">
+      <div
+        className="h-full w-full justify-between"
+        style={{ paddingTop: headerHeight }}
+      >
         {row && col && maze && (
           <div className="bg-white h-full w-full">
             <Maze row={row} col={col} generatedMaze={maze} />

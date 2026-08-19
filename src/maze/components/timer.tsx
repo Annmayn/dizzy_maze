@@ -30,7 +30,7 @@ const Timer = () => {
 
   return (
     <div
-      className={`min-w-60 bg-white rounded-md px-5 text-blue-300 font-mono font-semibold text-3xl flex gap-x-3 items-center
+      className={`w-full md:w-auto md:min-w-60 bg-white rounded-md px-3 md:px-5 text-blue-300 font-mono font-semibold text-xl md:text-3xl flex gap-x-2 md:gap-x-3 items-center
        ${startTimer ? "justify-start" : "justify-center"}`}
     >
       <AvTimer fontSize="large" />
