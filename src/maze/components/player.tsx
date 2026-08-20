@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Direction } from "../utils/direction.ts";
 import { PIXEL_SIZE, PLAYER_PIXEL_X, PLAYER_PIXEL_Y } from "../../common.ts";
 import { canMoveToNewCoordinates } from "../utils/canMoveToNewCoordinates.ts";
@@ -7,7 +7,7 @@ import {
   fromCoordinates,
   toCoordinates,
 } from "../utils/coordinates.ts";
-import { useTimer } from "../hooks/useTimer.tsx";
+import { useGameActions } from "../hooks/useTimer.tsx";
 
 export type MazeType = number[][];
 
@@ -18,88 +18,117 @@ export interface PlayerProps {
 
 const helperKeys = ["h", "H", "f", "F"];
 
+const rotationFor = (direction: Direction) => {
+  if (direction === Direction.DOWN) return 90;
+  if (direction === Direction.LEFT) return 0;
+  if (direction === Direction.UP) return -90;
+  if (direction === Direction.RIGHT) return 180;
+  return -90;
+};
+
 const Player = ({ maze, onPositionChange }: PlayerProps) => {
   const {
-    startTimer,
+    refs: gameRefs,
     setStartTimer,
-    setCurrentTime,
-    hasGameEnded,
     setHasGameEnded,
+    setFinalScore,
     setOpenSnackBar,
     setShowSolution,
-  } = useTimer();
+  } = useGameActions();
+
   const initialX =
     (maze[0].length - 2) * PIXEL_SIZE +
     Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2);
-
   const initialY =
     (maze.length - 2) * PIXEL_SIZE +
     Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2);
 
-  const [playerDirection, setPlayerDirection] = useState(Direction.NEUTRAL);
-  const playerDirectionRef = useRef<Direction>();
+  const playerElRef = useRef<HTMLDivElement>(null);
+  const playerDirectionRef = useRef(Direction.NEUTRAL);
+  const rotationRef = useRef(rotationFor(Direction.NEUTRAL));
   const mazeRef = useRef<MazeType>(maze);
-  const currentTimeRef = useRef<number>();
+  const frameRef = useRef<number>();
   const prevTimeRef = useRef<number>();
-  const [playerX, setPlayerX] = useState(initialX);
-  const [playerY, setPlayerY] = useState(initialY);
-  const playerPosRef = useRef<Coordinates>(toCoordinates(playerX, playerY));
+  const playerPosRef = useRef<Coordinates>(toCoordinates(initialX, initialY));
+  const onPositionChangeRef = useRef(onPositionChange);
+  onPositionChangeRef.current = onPositionChange;
+
+  const paintPlayer = useCallback((x: number, y: number) => {
+    const el = playerElRef.current;
+    if (!el) return;
+    el.style.transform = `translate(${x}px, ${y}px) rotate(${rotationRef.current}deg)`;
+  }, []);
+
+  const placePlayer = useCallback(
+    (x: number, y: number) => {
+      playerPosRef.current = toCoordinates(x, y);
+      paintPlayer(x, y);
+      onPositionChangeRef.current?.(x, y);
+    },
+    [paintPlayer],
+  );
 
   useEffect(() => {
-    playerDirectionRef.current = playerDirection;
-  }, [playerDirection]);
-
-  useEffect(() => {
-    playerPosRef.current = toCoordinates(playerX, playerY);
-    onPositionChange?.(playerX, playerY);
-  }, [playerX, playerY, onPositionChange]);
-
-  useEffect(() => {
-    setPlayerX(
+    const nextX =
       (maze[0].length - 2) * PIXEL_SIZE +
-        Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2),
-    );
-    setPlayerY(
+      Math.floor((PIXEL_SIZE - PLAYER_PIXEL_Y) / 2);
+    const nextY =
       (maze.length - 2) * PIXEL_SIZE +
-        Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2),
-    );
-    setPlayerDirection(Direction.NEUTRAL);
+      Math.floor((PIXEL_SIZE - PLAYER_PIXEL_X) / 2);
+    playerDirectionRef.current = Direction.NEUTRAL;
+    rotationRef.current = rotationFor(Direction.NEUTRAL);
     mazeRef.current = maze;
-  }, [maze]);
+    placePlayer(nextX, nextY);
+  }, [maze, placePlayer]);
 
   const resetPlayer = useCallback(() => {
-    setPlayerDirection(Direction.NEUTRAL);
-    setPlayerX(initialX);
-    setPlayerY(initialY);
+    playerDirectionRef.current = Direction.NEUTRAL;
+    rotationRef.current = rotationFor(Direction.NEUTRAL);
+    placePlayer(initialX, initialY);
     setStartTimer(false);
-    setCurrentTime(0);
     setHasGameEnded(false);
-  }, [initialX, initialY, setCurrentTime, setHasGameEnded, setStartTimer]);
+    setFinalScore(0);
+  }, [
+    initialX,
+    initialY,
+    placePlayer,
+    setFinalScore,
+    setHasGameEnded,
+    setStartTimer,
+  ]);
 
-  const showHelp = useCallback(() => {
-    setOpenSnackBar(true);
-  }, [setOpenSnackBar]);
+  useEffect(() => {
+    const setDirection = (direction: Direction) => {
+      playerDirectionRef.current = direction;
+      rotationRef.current = rotationFor(direction);
+      const [x, y] = fromCoordinates(playerPosRef.current);
+      paintPlayer(x, y);
+    };
 
-  const handleKeyPress = useCallback(
-    (e: KeyboardEvent) => {
-      if (!helperKeys.includes(e.key) && !startTimer && !hasGameEnded)
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (
+        !helperKeys.includes(e.key) &&
+        !gameRefs.current.startTimer &&
+        !gameRefs.current.hasGameEnded
+      ) {
         setStartTimer(true);
+      }
       switch (e.key) {
         case "w":
         case "W":
-          setPlayerDirection(Direction.UP);
+          setDirection(Direction.UP);
           break;
         case "s":
         case "S":
-          setPlayerDirection(Direction.DOWN);
+          setDirection(Direction.DOWN);
           break;
         case "a":
         case "A":
-          setPlayerDirection(Direction.LEFT);
+          setDirection(Direction.LEFT);
           break;
         case "d":
         case "D":
-          setPlayerDirection(Direction.RIGHT);
+          setDirection(Direction.RIGHT);
           break;
         case "r":
         case "R":
@@ -107,109 +136,95 @@ const Player = ({ maze, onPositionChange }: PlayerProps) => {
           break;
         case "h":
         case "H":
-          showHelp();
+          setOpenSnackBar(true);
           break;
         case "f":
         case "F":
           setShowSolution((solution) => !solution);
           break;
       }
-    },
-    [
-      startTimer,
-      hasGameEnded,
-      setStartTimer,
-      resetPlayer,
-      showHelp,
-      setShowSolution,
-    ],
-  );
+    };
 
-  useEffect(() => {
-    window.addEventListener("keypress", handleKeyPress);
-    return () => window.removeEventListener("keypress", handleKeyPress);
-  }, [handleKeyPress]);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [
+    gameRefs,
+    paintPlayer,
+    resetPlayer,
+    setOpenSnackBar,
+    setShowSolution,
+    setStartTimer,
+  ]);
 
   const hasReachedFinishLine = (x: number, y: number) => {
     return x / PLAYER_PIXEL_X < 2 && y / PLAYER_PIXEL_Y < 2;
   };
 
-  const updatePosition = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (_timedelta: number) => {
-      const maze = mazeRef.current;
-      const playerDirection = playerDirectionRef.current;
-      if (playerDirection == Direction.NEUTRAL) return;
+  useEffect(() => {
+    const updatePosition = () => {
+      const currentMaze = mazeRef.current;
+      const direction = playerDirectionRef.current;
+      if (direction === Direction.NEUTRAL) return;
+
       const [x, y] = fromCoordinates(playerPosRef.current);
       if (hasReachedFinishLine(x, y)) {
         setStartTimer(false);
         setHasGameEnded(true);
         return;
       }
-      // const multiplier = timedelta * 0.3;
-      const multiplier = 7.5;
-      if (playerDirection == Direction.UP) {
-        const newCoords = toCoordinates(x, y - multiplier);
-        setPlayerY(
-          canMoveToNewCoordinates(maze, newCoords) ? y - multiplier : y,
-        );
-      }
-      if (playerDirection == Direction.DOWN) {
-        const newCoords = toCoordinates(x, y + multiplier);
-        setPlayerY(
-          canMoveToNewCoordinates(maze, newCoords) ? y + multiplier : y,
-        );
-      }
-      if (playerDirection == Direction.LEFT) {
-        const newCoords = toCoordinates(x - multiplier, y);
-        setPlayerX(
-          canMoveToNewCoordinates(maze, newCoords) ? x - multiplier : x,
-        );
-      }
-      if (playerDirection == Direction.RIGHT) {
-        const newCoords = toCoordinates(x + multiplier, y);
-        setPlayerX(
-          canMoveToNewCoordinates(maze, newCoords) ? x + multiplier : x,
-        );
-      }
-    },
-    [setHasGameEnded, setStartTimer],
-  );
 
-  const animatePlayer = useCallback(
-    (time: number) => {
-      if (prevTimeRef.current && playerDirectionRef.current != undefined) {
-        const timedelta = time - prevTimeRef.current;
-        updatePosition(timedelta);
+      const multiplier = 7.5;
+      let nextX = x;
+      let nextY = y;
+
+      if (direction === Direction.UP) {
+        const candidate = y - multiplier;
+        if (canMoveToNewCoordinates(currentMaze, toCoordinates(x, candidate))) {
+          nextY = candidate;
+        }
+      } else if (direction === Direction.DOWN) {
+        const candidate = y + multiplier;
+        if (canMoveToNewCoordinates(currentMaze, toCoordinates(x, candidate))) {
+          nextY = candidate;
+        }
+      } else if (direction === Direction.LEFT) {
+        const candidate = x - multiplier;
+        if (canMoveToNewCoordinates(currentMaze, toCoordinates(candidate, y))) {
+          nextX = candidate;
+        }
+      } else if (direction === Direction.RIGHT) {
+        const candidate = x + multiplier;
+        if (canMoveToNewCoordinates(currentMaze, toCoordinates(candidate, y))) {
+          nextX = candidate;
+        }
+      }
+
+      if (nextX === x && nextY === y) return;
+      placePlayer(nextX, nextY);
+    };
+
+    const animatePlayer = (time: number) => {
+      if (prevTimeRef.current != null) {
+        updatePosition();
       }
       prevTimeRef.current = time;
-      currentTimeRef.current = requestAnimationFrame(animatePlayer);
-    },
-    [updatePosition],
-  );
+      frameRef.current = requestAnimationFrame(animatePlayer);
+    };
 
-  useEffect(() => {
-    currentTimeRef.current = requestAnimationFrame(animatePlayer);
-    return () => cancelAnimationFrame(currentTimeRef.current!);
-  }, [animatePlayer]);
+    frameRef.current = requestAnimationFrame(animatePlayer);
+    return () => {
+      if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
+    };
+  }, [placePlayer, setHasGameEnded, setStartTimer]);
 
-  const rotation =
-    playerDirection == Direction.DOWN
-      ? 90
-      : playerDirection == Direction.LEFT
-        ? 0
-        : playerDirection == Direction.UP
-          ? -90
-          : playerDirection == Direction.RIGHT
-            ? 180
-            : -90;
   return (
     <div
+      ref={playerElRef}
       className="absolute left-0 top-0 z-10"
       style={{
         background: "url(assets/car.png) no-repeat center",
         backgroundSize: "cover",
-        transform: `translate(${playerX}px, ${playerY}px) rotate(${rotation}deg)`,
+        transform: `translate(${initialX}px, ${initialY}px) rotate(${rotationRef.current}deg)`,
         minWidth: `${PLAYER_PIXEL_Y}px`,
         width: `${PLAYER_PIXEL_Y}px`,
         minHeight: `${PLAYER_PIXEL_X}px`,

@@ -7,19 +7,22 @@ export const canMoveToNewCoordinates = (
   newCoordinate: Coordinates,
 ) => {
   const [newPlayerX, newPlayerY] = fromCoordinates(newCoordinate);
-  const mazeTotalX = maze.length * PIXEL_SIZE;
-  const mazeTotalY = maze.length * PIXEL_SIZE;
+  const rows = maze.length;
+  const cols = maze[0]?.length ?? 0;
   const newCoordinates = [
-    newCoordinate, //top left
-    toCoordinates(newPlayerX, newPlayerY + PLAYER_PIXEL_X - 1), //bottom left
-    toCoordinates(newPlayerX + PLAYER_PIXEL_Y, newPlayerY), //top right
-    toCoordinates(newPlayerX + PLAYER_PIXEL_Y, newPlayerY + PLAYER_PIXEL_X), //bottom right
+    newCoordinate, // top left
+    toCoordinates(newPlayerX, newPlayerY + PLAYER_PIXEL_X - 1), // bottom left
+    toCoordinates(newPlayerX + PLAYER_PIXEL_Y - 1, newPlayerY), // top right
+    toCoordinates(
+      newPlayerX + PLAYER_PIXEL_Y - 1,
+      newPlayerY + PLAYER_PIXEL_X - 1,
+    ), // bottom right
   ];
   for (const coordinates of newCoordinates) {
     const [y, x] = fromCoordinates(coordinates);
     const mazeX = Math.floor(x / PIXEL_SIZE);
     const mazeY = Math.floor(y / PIXEL_SIZE);
-    if (mazeX > mazeTotalX || mazeY > mazeTotalY) return false;
+    if (mazeX < 0 || mazeY < 0 || mazeX >= rows || mazeY >= cols) return false;
     if (maze[mazeX][mazeY] === 0) return false;
   }
   return true;

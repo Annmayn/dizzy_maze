@@ -1,32 +1,50 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useTimer } from "../hooks/useTimer.tsx";
+import { useEffect, useRef, useState } from "react";
+import { useGameActions, useGameState } from "../hooks/useTimer.tsx";
 import { AvTimer } from "@mui/icons-material";
 
 const Timer = () => {
-  const currentTimeRef = useRef<number>();
+  const frameRef = useRef<number>();
   const prevTimeRef = useRef<number>();
-  const { currentTime, setCurrentTime, startTimer } = useTimer();
+  const [currentTime, setCurrentTime] = useState(0);
+  const currentTimeRef = useRef(currentTime);
+  const { setFinalScore } = useGameActions();
+  const { startTimer, hasGameEnded } = useGameState();
+  const startTimerRef = useRef(startTimer);
 
-  const animateTimer = useCallback(
-    (time: number) => {
-      if (prevTimeRef.current) {
-        const timedelta = time - prevTimeRef.current;
-        const timedeltaInSeconds = timedelta / 1000;
-        if (startTimer)
-          setCurrentTime(
-            (t) => Math.round((t + timedeltaInSeconds) * 100) / 100,
-          );
-      }
-      prevTimeRef.current = time;
-      currentTimeRef.current = requestAnimationFrame(animateTimer);
-    },
-    [setCurrentTime, startTimer],
-  );
+  currentTimeRef.current = currentTime;
+  startTimerRef.current = startTimer;
 
   useEffect(() => {
-    currentTimeRef.current = requestAnimationFrame(animateTimer);
-    return () => cancelAnimationFrame(currentTimeRef.current!);
-  }, [animateTimer, startTimer]);
+    if (!startTimer && !hasGameEnded) {
+      setCurrentTime(0);
+      prevTimeRef.current = undefined;
+    }
+  }, [startTimer, hasGameEnded]);
+
+  useEffect(() => {
+    if (hasGameEnded) {
+      setFinalScore(currentTimeRef.current);
+    }
+  }, [hasGameEnded, setFinalScore]);
+
+  useEffect(() => {
+    const animateTimer = (time: number) => {
+      if (prevTimeRef.current != null && startTimerRef.current) {
+        const timedelta = time - prevTimeRef.current;
+        const timedeltaInSeconds = timedelta / 1000;
+        setCurrentTime(
+          (t) => Math.round((t + timedeltaInSeconds) * 100) / 100,
+        );
+      }
+      prevTimeRef.current = time;
+      frameRef.current = requestAnimationFrame(animateTimer);
+    };
+
+    frameRef.current = requestAnimationFrame(animateTimer);
+    return () => {
+      if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
 
   return (
     <div

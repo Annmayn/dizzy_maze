@@ -1,4 +1,4 @@
-import { useTimer } from "../hooks/useTimer.tsx";
+import { useGameState } from "../hooks/useTimer.tsx";
 import { Dialog, DialogContent, DialogTitle, Fade } from "@mui/material";
 import React from "react";
 import { TransitionProps } from "@mui/material/transitions";
@@ -13,7 +13,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 export const Score = () => {
-  const { hasGameEnded, currentTime } = useTimer();
+  const { hasGameEnded, finalScore } = useGameState();
 
   return (
     <Dialog
@@ -24,7 +24,7 @@ export const Score = () => {
       <DialogTitle>Game Over</DialogTitle>
       <DialogContent>
         <p>
-          Your score: <span>{currentTime}</span>
+          Your score: <span>{finalScore}</span>
         </p>
       </DialogContent>
     </Dialog>

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { PIXEL_SIZE, PLAYER_PIXEL_X, PLAYER_PIXEL_Y } from "../../common.ts";
 import Player from "./player.tsx";
 import { Score } from "./Score.tsx";
-import { useTimer } from "../hooks/useTimer.tsx";
 
 export type MazeType = number[][];
 
@@ -10,18 +9,16 @@ export interface MazeProps {
   row: number;
   col: number;
   generatedMaze: MazeType;
+  showSolution: boolean;
 }
 
-const Maze = ({ generatedMaze }: MazeProps) => {
-  const { showSolution } = useTimer();
-  const mazeRef = useRef<MazeType>(generatedMaze);
+const isPath = (val: number) => val == 1 || val == 2;
+const isSolution = (val: number) => val == 2;
+
+const Maze = ({ generatedMaze, showSolution }: MazeProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const playerPosRef = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    mazeRef.current = generatedMaze;
-  }, [generatedMaze]);
 
   const updateCamera = useCallback((playerX: number, playerY: number) => {
     const viewport = viewportRef.current;
@@ -52,8 +49,6 @@ const Maze = ({ generatedMaze }: MazeProps) => {
     return () => window.removeEventListener("resize", handleResize);
   }, [updateCamera]);
 
-  const isPath = (val: number) => val == 1 || val == 2;
-  const isSolution = (val: number) => val == 2;
   const cachedGeneratedMaze = useMemo(() => {
     return generatedMaze.map((row, rowInd) => {
       return (
@@ -89,20 +84,19 @@ const Maze = ({ generatedMaze }: MazeProps) => {
       );
     });
   }, [generatedMaze, showSolution]);
+
   return (
-    <>
+    <div ref={viewportRef} className="relative h-full w-full overflow-hidden">
       <div
-        ref={viewportRef}
-        className="relative h-full w-full overflow-hidden"
+        ref={worldRef}
+        className="relative inline-block will-change-transform"
       >
-        <div ref={worldRef} className="relative inline-block will-change-transform">
-          {cachedGeneratedMaze}
-          <Player maze={generatedMaze} onPositionChange={updateCamera} />
-        </div>
-        <Score />
+        {cachedGeneratedMaze}
+        <Player maze={generatedMaze} onPositionChange={updateCamera} />
       </div>
-    </>
+      <Score />
+    </div>
   );
 };
 
-export default Maze;
+export default memo(Maze);

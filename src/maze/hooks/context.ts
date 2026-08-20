@@ -1,16 +1,28 @@
-import { createContext, Dispatch, SetStateAction } from "react";
+import { createContext, Dispatch, SetStateAction, MutableRefObject } from "react";
 
-interface TimerContextProps {
+export interface GameRefs {
   startTimer: boolean;
-  setStartTimer: Dispatch<SetStateAction<boolean>>;
   hasGameEnded: boolean;
+}
+
+export interface GameActions {
+  refs: MutableRefObject<GameRefs>;
+  setStartTimer: Dispatch<SetStateAction<boolean>>;
   setHasGameEnded: Dispatch<SetStateAction<boolean>>;
-  currentTime: number;
-  setCurrentTime: Dispatch<SetStateAction<number>>;
+  setFinalScore: Dispatch<SetStateAction<number>>;
   setOpenSnackBar: Dispatch<SetStateAction<boolean>>;
-  showSolution: boolean;
   setShowSolution: Dispatch<SetStateAction<boolean>>;
 }
-export const TimerContext = createContext<TimerContextProps | undefined>(
+
+export interface GameState {
+  startTimer: boolean;
+  hasGameEnded: boolean;
+  finalScore: number;
+  showSolution: boolean;
+}
+
+export const GameActionsContext = createContext<GameActions | undefined>(
   undefined,
 );
+
+export const GameStateContext = createContext<GameState | undefined>(undefined);

@@ -1,8 +1,14 @@
 import { useContext } from "react";
-import { TimerContext } from "./context.ts";
+import { GameActionsContext, GameStateContext } from "./context.ts";
 
-export const useTimer = () => {
-  const context = useContext(TimerContext);
-  if (context == undefined) throw "Outside the TimerContext";
+export const useGameActions = () => {
+  const context = useContext(GameActionsContext);
+  if (context == undefined) throw new Error("Outside the GameActionsContext");
+  return context;
+};
+
+export const useGameState = () => {
+  const context = useContext(GameStateContext);
+  if (context == undefined) throw new Error("Outside the GameStateContext");
   return context;
 };
