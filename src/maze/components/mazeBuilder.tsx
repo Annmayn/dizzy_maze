@@ -151,6 +151,9 @@ const MazeBuilder = () => {
               <br />
               Press <span className="font-semibold">F</span> to see solution.
               <br />
+              Press <span className="font-semibold">Space</span> to zoom out /
+              in.
+              <br />
               Press <span className="font-semibold">H</span> for help.
             </Alert>
           </Snackbar>

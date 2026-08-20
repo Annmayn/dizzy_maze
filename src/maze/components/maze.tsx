@@ -19,14 +19,33 @@ const Maze = ({ generatedMaze, showSolution }: MazeProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const playerPosRef = useRef({ x: 0, y: 0 });
+  const overviewRef = useRef(false);
+  const mazeSizeRef = useRef({
+    rows: generatedMaze.length,
+    cols: generatedMaze[0].length,
+  });
 
-  const updateCamera = useCallback((playerX: number, playerY: number) => {
+  const applyCamera = useCallback(() => {
     const viewport = viewportRef.current;
     const world = worldRef.current;
     if (!viewport || !world) return;
 
-    playerPosRef.current = { x: playerX, y: playerY };
+    if (overviewRef.current) {
+      const mazeWidth = mazeSizeRef.current.cols * PIXEL_SIZE;
+      const mazeHeight = mazeSizeRef.current.rows * PIXEL_SIZE;
+      const scale = Math.min(
+        viewport.clientWidth / mazeWidth,
+        viewport.clientHeight / mazeHeight,
+        1,
+      );
+      const tx = (viewport.clientWidth - mazeWidth * scale) / 2;
+      const ty = (viewport.clientHeight - mazeHeight * scale) / 2;
+      world.style.transformOrigin = "0 0";
+      world.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      return;
+    }
 
+    const { x: playerX, y: playerY } = playerPosRef.current;
     // Don't pan past the maze origin — keep the top-left fixed once it's visible.
     const cameraX = Math.min(
       0,
@@ -36,18 +55,84 @@ const Maze = ({ generatedMaze, showSolution }: MazeProps) => {
       0,
       viewport.clientHeight / 2 - playerY - PLAYER_PIXEL_X / 2,
     );
+    world.style.transformOrigin = "0 0";
     world.style.transform = `translate(${cameraX}px, ${cameraY}px)`;
   }, []);
 
+  const setCameraTransition = useCallback((enabled: boolean) => {
+    const world = worldRef.current;
+    if (!world) return;
+    world.style.transition = enabled
+      ? "transform 450ms ease-in-out"
+      : "none";
+  }, []);
+
+  const updateCamera = useCallback(
+    (playerX: number, playerY: number) => {
+      playerPosRef.current = { x: playerX, y: playerY };
+      // Overview is a fixed full-maze framing — skip follow-cam updates while active.
+      if (overviewRef.current) return;
+      setCameraTransition(false);
+      applyCamera();
+    },
+    [applyCamera, setCameraTransition],
+  );
+
+  useEffect(() => {
+    mazeSizeRef.current = {
+      rows: generatedMaze.length,
+      cols: generatedMaze[0].length,
+    };
+    overviewRef.current = false;
+    setCameraTransition(false);
+    applyCamera();
+  }, [generatedMaze, applyCamera, setCameraTransition]);
+
   useEffect(() => {
     const handleResize = () => {
-      const { x, y } = playerPosRef.current;
-      updateCamera(x, y);
+      setCameraTransition(false);
+      applyCamera();
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [updateCamera]);
+  }, [applyCamera, setCameraTransition]);
+
+  useEffect(() => {
+    const world = worldRef.current;
+    if (!world) return;
+
+    const handleTransitionEnd = (e: TransitionEvent) => {
+      if (e.propertyName !== "transform") return;
+      // Drop the transition after the zoom so follow-cam pans stay instant.
+      setCameraTransition(false);
+    };
+
+    world.addEventListener("transitionend", handleTransitionEnd);
+    return () => world.removeEventListener("transitionend", handleTransitionEnd);
+  }, [setCameraTransition]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== " ") return;
+      if (e.repeat) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      setCameraTransition(true);
+      overviewRef.current = !overviewRef.current;
+      applyCamera();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [applyCamera, setCameraTransition]);
 
   const cachedGeneratedMaze = useMemo(() => {
     return generatedMaze.map((row, rowInd) => {

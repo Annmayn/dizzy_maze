@@ -16,7 +16,7 @@ export interface PlayerProps {
   onPositionChange?: (x: number, y: number) => void;
 }
 
-const helperKeys = ["h", "H", "f", "F"];
+const helperKeys = ["h", "H", "f", "F", " "];
 
 const rotationFor = (direction: Direction) => {
   if (direction === Direction.DOWN) return 90;
